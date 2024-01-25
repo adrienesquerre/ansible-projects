@@ -1,0 +1,62 @@
+---
+- hosts: localhost
+  become: yes
+  vars_files:
+    - vault.yml
+  gather_facts: no
+  tasks:
+    - name: Run Python Info Script with System Python
+      command: python3 /Users/esquerra/scripts/py-dev/py_config.py
+      register: sys_python_info
+    - debug:
+        var: sys_python_info.stdout_lines
+
+    - name: Run Python Info Script with Homebrew Python
+      command: /opt/homebrew/bin/python3.12 /Users/esquerra/scripts/py-dev/py_config.py
+      register: brew_python_info
+      ignore_errors: yes
+    - debug:
+        var: brew_python_info.stdout_lines
+
+    - name: List all available shells
+      command: cat /etc/shells
+      register: shells_list
+
+    - name: Add descriptions to shells and list them
+      shell: |
+        while IFS= read -r line; do
+          case "$line" in
+            "/bin/bash") echo "$line: The Bourne Again Shell, a common default shell on many Unix systems.";;
+            "/bin/csh") echo "$line: The C Shell.";;
+            "/bin/dash") echo "$line: The Debian Almquist Shell, a POSIX-compliant shell faster than bash.";;
+            "/bin/ksh") echo "$line: The Korn Shell.";;
+            "/bin/sh") echo "$line: Typically a symlink to the system's default shell.";;
+            "/bin/tcsh") echo "$line: An enhanced version of the C Shell.";;
+            "/bin/zsh") echo "$line: The Z Shell, known for its extensive feature set.";;
+            "/usr/local/bin/pwsh") echo "$line: PowerShell, a task automation shell from Microsoft.";;
+            *) echo "$line";;
+          esac
+        done < /etc/shells
+      register: shell_descriptions
+      changed_when: false
+
+    - debug:
+        var: shell_descriptions.stdout_lines
+
+    - name: Get .zshrc file (if exists)
+      slurp:
+        src: /Users/esquerra/.zshrc
+      register: zshrc
+      ignore_errors: yes
+    - debug:
+        msg: "{{ zshrc['content'] | b64decode }}"
+      when: zshrc is defined and zshrc is not failed
+
+    - name: Get .bashrc file (if exists)
+      slurp:
+        src: /Users/esquerra/.bashrc
+      register: bashrc
+      ignore_errors: yes
+    - debug:
+        msg: "{{ bashrc['content'] | b64decode }}"
+      when: bashrc is defined and bashrc is not failed

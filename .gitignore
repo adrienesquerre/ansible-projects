@@ -1,0 +1,10 @@
+# Ignore folder
+cooking_something/
+
+# Ignore specific playbook
+security_playbook.yml
+my_playbook.yml
+
+# Ignore the vault password file
+.vault_password
+vault.yml
